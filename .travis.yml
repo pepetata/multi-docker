@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t pepetata/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true pepetata/react-test npm test
+
+after_success:
+  - docker build -t pepetata/multi-client ./client
+  - docker build -t pepetata/multi-nginx ./nginx
+  - docker build -t pepetata/multi-server ./server
+  - docker build -t pepetata/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push pepetata/multi-client
+  - docker push pepetata/multi-nginx
+  - docker push pepetata/multi-server
+  - docker push pepetata/multi-worker
